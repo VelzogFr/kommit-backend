@@ -1,0 +1,29 @@
+# Dépendances
+node_modules/
+
+# Build
+dist/
+
+# Environnement
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# macOS
+.DS_Store
+
+# Éditeurs
+.idea/
+
+# Claude Code
+.claude/settings.local.json
+
+/src/generated/prisma
+
+# Client Prisma généré
+src/generated/

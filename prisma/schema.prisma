@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─────────────────────────────────────────────────────
+// AUTHENTIFICATION (KOM-06)
+// ─────────────────────────────────────────────────────
+// Les 4 tables attendues par Better Auth. Noms, champs ET index ne sont pas
+// libres : l'adapter Prisma les cherche tels quels. Relevés à la source, sur
+// better-auth 1.7.2, via `getAuthTables()` — pas reconstitués de mémoire.
+// Aucun champ à nous : le « Prénom » du ticket, c'est `user.name`.
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  // Le schéma Zod normalise la saisie en amont, donc cette contrainte attrape
+  // aussi ` MARC@x.com ` (RM21) et arbitre deux signups simultanés (RM9).
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  // En cascade : supprimer un compte ferme ses sessions, il n'en reste pas une
+  // ouverte qui pointerait dans le vide.
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Postgres n'indexe pas la colonne portante d'une clé étrangère : sans lui,
+  // chaque suppression d'utilisateur balaie toute la table.
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  issuer                String
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  // Le mot de passe haché vit ici, pas sur `User` : Better Auth traite
+  // « email + mot de passe » comme un provider parmi d'autres.
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  // Une identité de provider n'existe qu'une fois. Sans cette contrainte, deux
+  // requêtes concurrentes créent deux lignes pour la même identité, et c'est
+  // l'ordre de tri de Postgres qui décide laquelle porte le mot de passe utilisé.
+  @@unique([issuer, accountId])
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+  @@map("verification")
+}
