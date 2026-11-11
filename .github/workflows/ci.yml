@@ -1,0 +1,32 @@
+name: CI kommit-backend
+
+on:
+  pull_request:
+    branches: [dev]
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Sans `version:`, l'action lit `packageManager` dans package.json.
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Build
+        run: pnpm build
+
+      # GitHub Actions pose CI=true : Vitest tourne une fois et sort.
+      - name: Test
+        run: pnpm test
