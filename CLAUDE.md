@@ -37,6 +37,7 @@ kommit-backend/
 ├── eslint.config.js       # configuration du linter
 ├── package.json
 ├── prisma.config.ts       # configuration de la CLI Prisma
+├── render.yaml            # le serveur backend de DEV sur Render (Blueprint)
 ├── tsconfig.json
 └── vitest.config.ts       # configuration des tests unitaires
 ```

@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: kommit-backend-hyunfix-dev
+    runtime: node
+    # Sans cette ligne, Render prend l'offre payante et demande une carte.
+    plan: free
+    branch: dev
+    autoDeploy: true
+    buildCommand: pnpm install --frozen-lockfile && pnpm build
+    startCommand: pnpm start
+    healthCheckPath: /health
+    # Pas de PORT ici : Render le fournit, le fixer casse le health check.
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: BETTER_AUTH_SECRET
+        sync: false
+      - key: BETTER_AUTH_URL
+        value: https://kommit-backend-hyunfix-dev.onrender.com
+      - key: FRONTEND_ORIGINS
+        value: http://localhost:5173,https://kommit-frontend-hyunfix-dev.vercel.app
